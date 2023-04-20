@@ -1,0 +1,722 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  idCompany             Int                 @id @unique @default(autoincrement())
+  code                  String?             @unique @default(uuid())
+  logomarca             String?             @db.LongText
+  NomeEmpresa           String              @db.VarChar(45)
+  cnpj                  String              @unique @db.VarChar(45)
+  razaosocial           String?             @db.VarChar(45)
+  logradouro            String?             @db.VarChar(45)
+  bairro                String?             @db.VarChar(45)
+  cep                   String?             @db.VarChar(45)
+  cidade                String?             @db.VarChar(45)
+  estado                String?             @db.VarChar(45)
+  telefone              String?             @db.VarChar(45)
+  logradouroComplemento String?             @db.VarChar(255)
+  url                   String?             @db.VarChar(45)
+  segment               String?             @db.VarChar(45)
+  status                String?             @default("New") @db.VarChar(45)
+  email                 String              @db.VarChar(255)
+  ConfigParams          ConfigCompany[]
+  PersonAppointment     PersonAppointment[]
+  WorkoutScore          WorkoutScore[]
+  typePayment           TypePayment[]
+  calendar              Calendar[]
+  calendarWeek          CalendarWeek[]
+  schedule              Schedule[]
+  invoice               Invoice[]
+  menuApp               menuApp[]
+  plans                 Plan[]
+  product               product[]
+  Reservation           Reservation[]
+  Revenue               Revenue[]
+  services              services[]
+  Sugestion             sugestion[]
+  Person                Person[]
+  Workout               Workout[]
+  firebase              firebaseConfig[]
+
+  @@map("company")
+}
+
+model firebaseConfig {
+  tenant_id                   Int     @unique
+  type                        String
+  project_id                  String
+  private_key_id              String
+  private_key                 String  @db.LongText
+  client_email                String
+  client_id                   String
+  auth_uri                    String
+  token_uri                   String
+  auth_provider_x509_cert_url String
+  client_x509_cert_url        String
+  Company                     Company @relation(fields: [tenant_id], references: [idCompany])
+}
+
+model Person {
+  idPerson       Int         @default(autoincrement())
+  tenant_id      Int
+  code           String?     @default(uuid())
+  email          String
+  name           String      @db.VarChar(255)
+  cpf            String      @db.VarChar(45)
+  sexo           String?     @db.VarChar(45)
+  phoneNumber    String?     @db.VarChar(45)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  foto           String?     @db.LongText
+  uuid           String?     @db.VarChar(100)
+  token          String?     @db.VarChar(255)
+  role           Role        @default(USER)
+  dataNascimento DateTime?
+  cargo          String?     @db.VarChar(255)
+  dateActive     DateTime?
+  dateInactive   DateTime?   @db.Date
+  profile        RoleCompany @default(CUSTOMER)
+  status         String?     @default("new") @db.VarChar(255)
+
+  contact           String?             @db.VarChar(255)
+  datePayment       Int?
+  personAppointment PersonAppointment[]
+  WorkoutScore      WorkoutScore[]
+  Invoice           Invoice[]
+  Records           personRecords[]
+  Reservation       Reservation[]
+  Revenue           Revenue[]
+  Company           Company             @relation(fields: [tenant_id], references: [idCompany])
+
+  @@id([idPerson, tenant_id])
+  @@unique([idPerson, tenant_id])
+  @@unique([email, tenant_id, cpf])
+  @@unique([tenant_id, profile, cpf])
+  @@map("persons")
+}
+
+model menuApp {
+  idMenu      Int      @id @default(autoincrement())
+  icon        String?  @db.LongText
+  url         String?  @db.VarChar(255)
+  status      String?  @db.VarChar(45)
+  nivel       String?  @db.VarChar(45)
+  nivelAcesso String?  @db.VarChar(45)
+  role        String?  @db.VarChar(255)
+  tenant_id   Int?
+  title       String?  @db.VarChar(255)
+  Company     Company? @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+
+  @@index([tenant_id], map: "fk_menuAppPerson")
+}
+
+model Calendar {
+  date        DateTime      @db.Date
+  type        Boolean
+  day         String?       @db.VarChar(45)
+  month       String?       @db.VarChar(45)
+  year        Int?          @db.Year
+  weekday     String?       @db.VarChar(45)
+  mes         String?       @db.VarChar(45)
+  weekname    String?       @db.VarChar(45)
+  quarterly   String?       @db.VarChar(45)
+  tenant_id   Int
+  Company     Company       @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, map: "fk_companyCalendar")
+  Reservation Reservation[]
+
+  @@id([date, tenant_id])
+  @@index([tenant_id], map: "fk_calendarioCompany_idx")
+  @@map("calendar")
+}
+
+model Notifications {
+  code      Int      @id @unique @default(autoincrement())
+  token     String?
+  title     String
+  body      String   @db.VarChar(255)
+  data      String?  @db.VarChar(45)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  type      String?
+  topic     String?
+  tenant_id Int?
+  idPerson  Int?
+  status    String?  @db.VarChar(50)
+
+  @@map("notifications")
+}
+
+model Schedule {
+  idHour            Int                 @default(autoincrement())
+  tenant_id         Int
+  name              String?             @db.VarChar(45)
+  hourStart         DateTime            @db.Time(0)
+  hourEnd           String?
+  vacancy           String              @db.VarChar(45)
+  status            String              @db.VarChar(45)
+  typeHour          String?             @db.VarChar(45)
+  creditBonus       String?             @db.VarChar(99)
+  service           Int
+  tipoReservation   String?             @default("Normal") @db.VarChar(45)
+  PersonAppointment PersonAppointment[]
+  HourWeek          HourWeek[]
+  Company           Company             @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+  Reservation       Reservation[]
+
+  @@id([idHour, service])
+  @@unique([idHour, tenant_id])
+  @@index([service], map: "fk_serviceHour")
+  @@index([tenant_id], map: "hourTenant")
+  @@map("hours")
+}
+
+model HourWeek {
+  idHour    Int
+  dayOfWeek Int
+  coach     Int?
+  vacancy   Int?
+  tenant_id Int
+  hours     Schedule @relation(fields: [idHour, tenant_id], references: [idHour, tenant_id], onDelete: Cascade)
+
+  @@id([idHour, dayOfWeek, tenant_id])
+  @@unique([idHour, tenant_id, dayOfWeek])
+  @@map("hourWeek")
+}
+
+model PersonAppointment {
+  code      Int          @unique @default(autoincrement())
+  idHour    Int
+  idPerson  Int
+  dayOfWeek Int
+  tenant_id Int
+  weekDay   CalendarWeek @relation(fields: [dayOfWeek, tenant_id], references: [day, tenant_id])
+  hour      Schedule     @relation(fields: [idHour, tenant_id], references: [idHour, tenant_id], onDelete: Cascade)
+  person    Person       @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id], onDelete: Cascade)
+  company   Company      @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+
+  @@index([dayOfWeek, tenant_id, idHour, idPerson], map: "PersonApp_dayOfWeek_tenant_id_fkey")
+}
+
+model Plan {
+  idPlan             Int            @default(autoincrement())
+  tenant_id          Int
+  code               String?        @db.VarChar(45)
+  name               String         @db.VarChar(45)
+  description        String?        @db.Text
+  typePeriod         String?        @db.VarChar(45)
+  qtdPeriod          Int
+  daysOfWeek         Int
+  amount             Float
+  status             String         @db.VarChar(45)
+  taxRegistration    Float?
+  gracePeriod        Int?
+  responsibleUpdated String?
+  typeUse            String?        @db.VarChar(45)
+  promotional        Boolean        @default(false)
+  acumulative        Boolean        @default(false)
+  created_dt         DateTime?      @default(now()) @db.Timestamp(0)
+  updated_dt         DateTime       @updatedAt
+  Invoice            Invoice[]
+  planServices       planServices[]
+  company            Company        @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+
+  @@id([idPlan, tenant_id])
+  @@unique([idPlan, tenant_id])
+  @@index([tenant_id], map: "plans_tenant_id_fkey")
+  @@map("plans")
+}
+
+model planServices {
+  idPlan    Int
+  tenant_id Int      @default(1)
+  idService Int
+  qtdSemana String?  @db.VarChar(45)
+  valor     String?  @db.VarChar(45)
+  plan      Plan     @relation(fields: [idPlan, tenant_id], references: [idPlan, tenant_id], onDelete: Cascade, onUpdate: Cascade)
+  services  services @relation(fields: [idService, tenant_id], references: [idService, tenant_id], onDelete: Cascade)
+
+  @@id([idPlan, idService])
+}
+
+model Reservation {
+  idReservation Int      @unique @default(autoincrement())
+  tenant_id     Int
+  idPerson      Int
+  idHour        Int
+  idInvoice     Int?
+  service       Int?
+  date          DateTime @db.Date
+  status        String   @default("Gerada") @db.VarChar(45)
+  experimental  Int?
+
+  hourCancel      DateTime? @db.DateTime(0)
+  hourReservation DateTime? @db.DateTime(0)
+  typeReservation String?   @db.VarChar(255)
+  hours           Schedule  @relation(fields: [idHour, tenant_id], references: [idHour, tenant_id], onDelete: Cascade)
+  Invoice         Invoice?  @relation(fields: [idInvoice, tenant_id], references: [id, tenant_id], onDelete: Cascade)
+  Person          Person    @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id])
+  Company         Company   @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+  Calendar        Calendar  @relation(fields: [tenant_id, date], references: [tenant_id, date], onDelete: Cascade)
+
+  @@id([idReservation, idPerson, idHour, tenant_id])
+  @@index([tenant_id], map: "reservations_date_tenant_id_fkey")
+  @@index([idHour], map: "reservations_idHour_fkey")
+  @@index([idInvoice], map: "reservations_idInvoice_fkey")
+  @@index([idPerson], map: "reservations_idPerson_fkey")
+  @@map("reservations")
+}
+
+model Invoice {
+  id             Int           @default(autoincrement())
+  idPerson       Int
+  tenant_id      Int
+  plan           Int
+  typePayment    String?       @db.VarChar(45)
+  status         String?       @default("Gerada") @db.VarChar(45)
+  installments   Int?
+  nContract      Int?
+  dateStart      DateTime?     @db.Date
+  amount         Decimal?      @default(0.00) @db.Decimal(10, 2)
+  amountInvoice  Decimal?      @default(0.00) @db.Decimal(10, 2)
+  amountDiscount Decimal?      @default(0.00) @db.Decimal(10, 2)
+  amountTrade    Decimal?      @db.Decimal(10, 2)
+  dtConfirmation DateTime?     @db.Date
+  dtCreated      DateTime?     @default(now())
+  dtDue          DateTime?     @db.Date
+  dtEnd          DateTime?     @db.Date
+  dtPayment      DateTime?     @db.Date
+  observation    String?       @db.VarChar(255)
+  updatedAt      DateTime      @updatedAt
+  Person         Person        @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id], onDelete: Cascade)
+  Contract       Contract?     @relation(fields: [nContract, tenant_id], references: [id, tenant_id], onDelete: Cascade)
+  plans          Plan          @relation(fields: [plan, tenant_id], references: [idPlan, tenant_id], onDelete: Cascade)
+  Company        Company       @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+  Reservation    Reservation[]
+  Revenue        Revenue?      @relation(fields: [revenueCode], references: [code])
+  revenueCode    Int?
+
+  @@id([id, tenant_id])
+  @@unique([tenant_id, id])
+  @@index([idPerson], map: "Invoice_idPerson_fkey")
+  @@index([nContract], map: "Invoice_nContract_fkey")
+  @@index([plan], map: "Invoice_plan_fkey")
+  @@index([tenant_id], map: "Invoice_tenant_id_fkey")
+  @@map("invoices")
+}
+
+model benchmark {
+  idBenchmark Int     @id @default(autoincrement())
+  description String? @db.Text
+  title       String? @db.VarChar(45)
+}
+
+model Contract {
+  id              Int       @default(autoincrement())
+  idPerson        Int
+  plan            Int
+  tenant_id       Int
+  idAssign        String?   @db.VarChar(255)
+  dateStart       DateTime  @default(now())
+  taxRegistration Decimal   @db.Decimal(10, 2)
+  amount          Decimal   @db.Decimal(10, 2)
+  amountTrade     Decimal?  @db.Decimal(10, 2)
+  dateEnd         DateTime?
+  typeDoc         String?   @default("contract") @db.VarChar(45)
+  typePayment     String?   @db.VarChar(45)
+  updatedAt       DateTime  @updatedAt
+  period          Int
+  //TypePayment     TypePayment? @relation(fields: [typePayment, tenant_id], references: [name, tenant_id])
+  Invoice         Invoice[]
+
+  @@unique([id, tenant_id])
+  @@map("contracts")
+}
+
+model expenses {
+  id              Int       @id @unique(map: "id") @default(autoincrement())
+  idfornecedor    Int?
+  referencia      String?   @db.VarChar(255)
+  tipo_pagamento  String    @db.VarChar(255)
+  numero_doc      String    @db.VarChar(255)
+  serie           String?   @db.VarChar(20)
+  dataPagamento   DateTime  @db.Date
+  valorPagamento  Decimal   @db.Decimal(10, 2)
+  forma_pagamento String    @db.VarChar(255)
+  dataEmissao     DateTime? @db.Date
+  dataVencimento  DateTime? @db.Date
+  NumParcela      String?   @db.VarChar(20)
+  ValorAcrescimo  String?   @db.VarChar(255)
+  ValorDesconto   String?   @db.VarChar(255)
+  observacao      String?   @db.Text
+  status          String?   @db.VarChar(45)
+  responsavel     String?   @db.VarChar(255)
+  dataLancamento  DateTime? @db.DateTime(0)
+  ultimaAlteracao DateTime? @db.DateTime(0)
+  description     String?   @db.VarChar(255)
+}
+
+model experimental {
+  idexperimental   Int       @id @default(autoincrement())
+  nomeCompleto     String    @db.VarChar(255)
+  telefone         String    @db.VarChar(45)
+  cpf              String?   @db.VarChar(50)
+  foto             String?   @db.VarChar(45)
+  dataExperimental DateTime? @db.Date
+  horario          String?   @db.VarChar(45)
+  email            String?   @db.VarChar(255)
+}
+
+model feed {
+  idFeed      Int       @default(autoincrement())
+  idusuario   Int?
+  status      String?   @db.VarChar(45)
+  liberacao   String?   @db.VarChar(45)
+  data        DateTime? @db.Date
+  foto        String?   @db.LongText
+  description String?   @db.Text
+  tenant_id   Int
+  title       String?   @db.VarChar(45)
+
+  @@id([idFeed, tenant_id])
+  @@index([tenant_id], map: "fk_feed_company1_idx")
+}
+
+model flowCash {
+  id             Int       @unique @default(autoincrement())
+  tenant_id      Int
+  revenueCode    Int
+  date           DateTime? @db.Date
+  amount         Decimal
+  description    String    @db.VarChar(255)
+  tipoPagamento  String?   @db.VarChar(45)
+  status         String?   @db.VarChar(45)
+  type           String    @db.VarChar(45)
+  extorno        String?   @db.VarChar(45)
+  initialBalance Decimal?
+  Balance        Decimal?
+  finalBalance   Decimal?
+
+  @@id([revenueCode, tenant_id])
+}
+
+model personRecords {
+  idRecord        Int             @default(autoincrement())
+  tenant_id       Int
+  record          Int
+  Carga           String?         @db.VarChar(45)
+  DataAvaliacao   DateTime?       @db.Date
+  tempo           String?         @db.VarChar(45)
+  reps            String?         @db.VarChar(45)
+  cargaLbs        String?         @db.VarChar(45)
+  cargakgs        String?         @db.VarChar(45)
+  idcoach         String?         @db.VarChar(45)
+  idPerson        Int
+  Person          Person          @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id])
+  PersonalRecords PersonalRecords @relation(fields: [record], references: [id], onDelete: Cascade)
+
+  @@id([idRecord, record])
+  @@index([record], map: "fk_Clientes_Records_PersonalRecords1_idx")
+  @@index([idPerson], map: "personRecords_idPerson_fkey")
+}
+
+model PersonalRecords {
+  id            Int             @id @default(autoincrement())
+  description   String?         @db.VarChar(45)
+  name          String?         @db.VarChar(100)
+  type          String?         @db.VarChar(45)
+  personRecords personRecords[]
+}
+
+model Revenue {
+  code        Int       @id @unique @default(autoincrement())
+  tenant_id   Int
+  idInvoice   Int?
+  idPerson    Int
+  typePayment String?   @db.VarChar(255)
+  datePayment DateTime  @db.Date
+  amount      Decimal?  @db.Decimal(10, 2)
+  status      String?   @db.VarChar(45)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  extra       String?   @db.VarChar(45)
+  type        String?   @db.VarChar(45)
+  // invoice     Invoice? @relation(fields: [idInvoice,tenant_id], references: [id,tenant_id], onDelete: Cascade)
+  person      Person    @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id], onDelete: Cascade)
+  company     Company   @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+  Invoice     Invoice[]
+
+  @@unique([tenant_id, idInvoice, idPerson])
+  @@index([idPerson], map: "revenues_idPerson_fkey")
+  @@map("revenues")
+}
+
+model services {
+  idService       Int       @default(autoincrement())
+  tenant_id       Int
+  name            String    @db.VarChar(45)
+  category        String?   @db.VarChar(45)
+  Descritivo      String?   @db.Text
+  status          String?   @db.VarChar(45)
+  valorDiaria     String?   @db.VarChar(45)
+  TipoAula        String?   @db.VarChar(45)
+  valor           String?   @db.VarChar(45)
+  custo           String?   @db.VarChar(45)
+  tempoServico    DateTime? @db.Time(0)
+  ultimaAlteracao DateTime? @default(now()) @db.DateTime(0)
+
+  Reservation  String?        @db.VarChar(45)
+  planServices planServices[]
+  Workout      Workout[]
+  Company      Company        @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, map: "fk_services_company1")
+
+  @@id([idService, tenant_id])
+  @@unique([idService, tenant_id])
+}
+
+model sugestion {
+  id          Int       @default(autoincrement())
+  data        DateTime? @default(now()) @db.DateTime(0)
+  status      String?   @db.VarChar(45)
+  cliente     Int?
+  anonimo     Int?
+  tenant_id   Int
+  description String?   @db.Text
+  title       String?   @db.VarChar(45)
+  Company     Company   @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, map: "fk_sugestao_company1")
+
+  @@id([id, tenant_id])
+  @@index([tenant_id], map: "fk_sugestao_company1")
+}
+
+model ConfigCompany {
+  idConfig        Int       @id @default(autoincrement())
+  tenant_id       Int
+  nome            String?   @db.VarChar(45)
+  tipo            String?   @db.VarChar(45)
+  params          String?   @db.VarChar(45)
+  ultimaAlteracao DateTime? @default(now()) @db.DateTime(0)
+  responsavel     String?   @db.VarChar(255)
+  imagem          String?   @db.LongText
+  valor           String?   @db.Text
+  description     String?   @db.MediumText
+  Company         Company   @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+
+  @@index([tenant_id], map: "ConfigCompany_tenant_id_fkey")
+}
+
+model TypePayment {
+  id          Int     @id @default(autoincrement())
+  tenant_id   Int
+  name        String  @db.VarChar(255)
+  description String? @db.VarChar(255)
+  type        String? @db.VarChar(255)
+  Company     Company @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, onUpdate: Cascade)
+  // Contract    Contract[]
+
+  @@unique([tenant_id, name])
+  @@map("typePayment")
+}
+
+model videosList {
+  idtreinoVideo Int            @id @default(autoincrement())
+  Nome          String         @db.VarChar(255)
+  url           String         @db.VarChar(255)
+  workoutVideo  workoutVideo[]
+}
+
+model webHook {
+  id    Int     @id @default(autoincrement())
+  texto String? @db.Text
+}
+
+model Workout {
+  idWorkout   Int      @id @default(autoincrement())
+  tenant_id   Int
+  service     Int
+  date        DateTime @db.Date
+  type        String?  @db.VarChar(45)
+  description String?  @db.Text
+
+  idPerson     Int?
+  favorite     String?        @db.VarChar(45)
+  Company      Company        @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, onUpdate: Cascade)
+  Service      services       @relation(fields: [service, tenant_id], references: [idService, tenant_id], onDelete: Cascade, onUpdate: Cascade)
+  WorkoutScore WorkoutScore[]
+  workoutVideo workoutVideo[]
+}
+
+model WorkoutScore {
+  id        Int      @default(autoincrement())
+  idWorkout Int
+  tenant_id Int
+  idPerson  Int
+  dateScore DateTime @default(now()) @db.Timestamp(0)
+  category  String?  @db.VarChar(45)
+  time      String?  @db.VarChar(45)
+  reps      Int?
+  rounds    String?  @db.VarChar(45)
+  cargaKG   String?  @db.VarChar(45)
+  cargaLbs  String?  @db.VarChar(45)
+  Person    Person   @relation(fields: [idPerson, tenant_id], references: [idPerson, tenant_id], onDelete: Cascade)
+  Company   Company  @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade)
+  workout   Workout  @relation(fields: [idWorkout], references: [idWorkout], onDelete: Cascade, map: "fk_scoreWod")
+
+  @@id([id, idWorkout, idPerson, dateScore, tenant_id])
+  @@index([idPerson], map: "WorkoutScore_idPerson_fkey")
+  @@index([tenant_id], map: "WorkoutScore_tenant_id_fkey")
+  @@index([idWorkout], map: "fk_scoreWod")
+}
+
+model workoutVideo {
+  video_id   Int
+  wod        Int
+  workout    Workout    @relation(fields: [wod], references: [idWorkout], onDelete: Cascade, map: "fk_treinoVideo_has_treino_treino1")
+  videosList videosList @relation(fields: [video_id], references: [idtreinoVideo], onDelete: Cascade, map: "fk_treinoVideo_has_treino_treinoVideo1")
+
+  @@id([video_id, wod])
+  @@index([wod], map: "fk_treinoVideo_has_treino_treino1_idx")
+  @@index([video_id], map: "fk_treinoVideo_has_treino_treinoVideo1_idx")
+}
+
+model CalendarWeek {
+  day               Int
+  typeDay           Boolean
+  tenant_id         Int
+  name              String
+  personAppointment PersonAppointment[]
+  company           Company             @relation(fields: [tenant_id], references: [idCompany])
+
+  @@id([day, tenant_id])
+  @@unique([day, tenant_id])
+  @@index([tenant_id], map: "calendarWeek_tenant_id_fkey")
+  @@map("calendarWeek")
+}
+
+model provider {
+  idfornecedor          Int     @id @unique(map: "idfornecedor_UNIQUE") @default(autoincrement())
+  NomeFornecedor        String? @db.VarChar(255)
+  cnpj                  String? @db.VarChar(255)
+  cpf                   String? @db.VarChar(255)
+  razaosocial           String? @db.VarChar(255)
+  logradouro            String? @db.VarChar(255)
+  bairro                String? @db.VarChar(255)
+  cep                   String? @db.VarChar(255)
+  cidade                String? @db.VarChar(255)
+  estado                String? @db.VarChar(255)
+  telefone              String? @db.VarChar(255)
+  logradouroComplemento String? @db.VarChar(255)
+  email                 String? @db.VarChar(255)
+}
+
+model inboundItem {
+  seqInbound   Int
+  idProduct    Int
+  quantidade   String?      @db.VarChar(45)
+  valor        String?      @db.VarChar(255)
+  valorTotal   String?      @db.VarChar(45)
+  inboundStock inboundStock @relation(fields: [seqInbound], references: [idInbbound], onDelete: Cascade, map: "productItens")
+
+  @@id([seqInbound, idProduct])
+}
+
+model inboundStock {
+  idInbbound  Int           @unique(map: "identradas_UNIQUE") @default(autoincrement())
+  tenant_id   Int
+  idProduct   Int
+  provider    Int
+  dateInbound DateTime?     @db.Date
+  tipoDoc     String?       @db.VarChar(45)
+  serie       String?       @db.VarChar(45)
+  numeroDoc   String?       @db.VarChar(45)
+  valorTotal  String?       @db.VarChar(45)
+  responsavel String?       @db.VarChar(255)
+  status      String?       @db.VarChar(45)
+  inboundItem inboundItem[]
+
+  @@id([idInbbound, idProduct, tenant_id])
+  @@index([idInbbound, tenant_id], map: "fk_inboundStock_product1_idx")
+}
+
+model outboundStock {
+  idOutbound           Int                  @unique(map: "idOutbound") @default(autoincrement())
+  dataSaida            DateTime?            @db.Date
+  cliente              String?              @db.VarChar(255)
+  tipoPagamento        String?              @db.VarChar(255)
+  responsavel          String?              @db.VarChar(255)
+  observacao           String?              @db.VarChar(255)
+  status               String?              @db.VarChar(45)
+  valorTotal           String?              @db.VarChar(45)
+  product_idProdutos   Int
+  product_idfornecedor Int
+  product_empresa      Int
+  outboundStockItens   outboundStockItens[]
+
+  @@id([idOutbound, product_idProdutos, product_idfornecedor, product_empresa])
+  @@index([product_idProdutos, product_idfornecedor, product_empresa], map: "fk_outboundStock_product1_idx")
+}
+
+model outboundStockItens {
+  idOutbound    Int
+  idProdutos    Int
+  quantidade    String?       @db.VarChar(45)
+  valorUnitario String?       @db.VarChar(45)
+  valorTotal    String?       @db.VarChar(45)
+  observacao    String?       @db.VarChar(45)
+  outboundStock outboundStock @relation(fields: [idOutbound], references: [idOutbound], onDelete: Cascade, map: "fk_Produtos_has_saidas_saidas1")
+
+  @@id([idOutbound, idProdutos])
+  @@index([idProdutos], map: "fk_Produtos_has_saidas_Produtos1_idx")
+  @@index([idOutbound], map: "fk_Produtos_has_saidas_saidas1_idx")
+}
+
+model product {
+  idProduct       Int             @unique @default(autoincrement())
+  tenant_id       Int
+  category        Int
+  codeProduct     String?         @db.VarChar(255)
+  description     String?         @db.VarChar(255)
+  codeBar         String?         @db.VarChar(255)
+  QtdEstoque      String?         @default("0") @db.VarChar(255)
+  valorVenda      String?         @db.VarChar(45)
+  tipoProduto     String?         @db.VarChar(255)
+  foto            String?         @db.LongText
+  stockControl    Int?
+  tipo            String?         @db.VarChar(45)
+  classificacao   String?         @db.VarChar(45)
+  company         Company         @relation(fields: [tenant_id], references: [idCompany], onDelete: Cascade, map: "fk_Produtos_empresa1")
+  productCategory productCategory @relation(fields: [category], references: [idCategoria], onDelete: Cascade, map: "fk_categoriaProduct")
+
+  @@id([idProduct, tenant_id, category])
+  @@index([tenant_id], map: "fk_Produtos_empresa1")
+  @@index([category], map: "fk_categoriaProduct_idx")
+}
+
+model productCategory {
+  idCategoria  Int       @unique @default(autoincrement())
+  idfornecedor Int
+  foto         String?   @db.LongText
+  description  String?   @db.VarChar(255)
+  tenant_id    Int
+  product      product[]
+
+  @@id([idCategoria, tenant_id])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum RoleCompany {
+  CUSTOMER
+  STAFF
+  MANAGER
+  EMPLOYEE
+}

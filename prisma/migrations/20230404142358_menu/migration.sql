@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `menuApp` MODIFY `icon` LONGTEXT NULL,
+    MODIFY `url` VARCHAR(255) NULL,
+    MODIFY `role` VARCHAR(255) NULL;
